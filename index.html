@@ -38,8 +38,12 @@ ol{padding:0;list-style:none;margin:0}li.rk{display:flex;justify-content:space-b
 .stage{position:relative;height:170px;display:grid;place-items:center;overflow:hidden}.box{font-size:5rem;filter:drop-shadow(0 0 8px var(--ac))}.flash{position:absolute;inset:0;background:#fff;border-radius:14px;opacity:0;pointer-events:none}
 .pstage{position:relative;height:210px;background:#0b0d22;border-radius:14px;overflow:hidden;margin-bottom:12px}.jac{position:absolute;left:calc(50% - 36px);top:50px;font-size:4.5rem;line-height:1}.jac.idle{animation:bob .9s ease-in-out infinite alternate}
 .pph{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);padding:8px 14px;border-radius:12px;background:var(--bg);border:1px solid var(--l);font-weight:600;white-space:nowrap}.pph.ok{background:var(--good);color:#06281b;border-color:var(--good)}.pph.bad{background:var(--bad);color:#fff;border-color:var(--bad)}
+.chip{padding:3px 10px;border:1px solid var(--l);border-radius:999px;background:var(--bg);color:var(--ink);font-size:.78rem}
+.gnd{position:absolute;left:0;right:0;bottom:0;height:56px;background:linear-gradient(#6b4a2f,#3f2a1a)}.hole{position:absolute;left:calc(50% + 20px);bottom:34px;width:48px;height:14px;border-radius:50%;background:#1d130b}
+.find{position:absolute;display:none;font-size:2.6rem;line-height:1;z-index:3}.jac{top:84px}.pph{top:10px;bottom:auto}
 @media (prefers-reduced-motion:reduce){.reveal{animation:none}}
 </style></head><body><main>
+<div id="fbanner" class="card hide" style="border-color:var(--bad);color:var(--bad);font-weight:600"></div>
 <div id="cfgerr" class="card hide"><b>Falta configurar o Firebase.</b> Cole sua configuração no topo do script do index.html.</div>
 <section id="auth" class="card hide" style="max-width:380px;margin:8vh auto">
  <h1 style="font-size:2.2rem">HoraDaBet</h1><p class="sm">Só moedas de mentira. Entre com sua conta Google.</p>
@@ -49,9 +53,10 @@ ol{padding:0;list-style:none;margin:0}li.rk{display:flex;justify-content:space-b
 </section>
 
 <div id="app" class="hide">
- <div class="top"><div><h1>HoraDaBet</h1><div class="sm"><span id="who"></span> · <span id="inc"></span></div></div>
+ <div class="top"><div><h1>HoraDaBet</h1><div class="sm"><span id="who"></span> <button class="chip" id="nickEdit" aria-label="Trocar nickname">✏️ trocar nome</button> · <span id="inc"></span></div></div>
   <div class="bank"><small>seu saldo <span id="zero"></span></small><span id="coins">0</span> 🪙</div></div>
- <nav><button data-t="race" aria-selected="true">Corrida</button><button data-t="mines" aria-selected="false">Mines</button><button data-t="crash" aria-selected="false">Foguete</button><button data-t="pix" aria-selected="false">Jacinto Pix</button><button data-t="slot" aria-selected="false">Slots</button><button data-t="dice" aria-selected="false">Dados</button><button data-t="shop" aria-selected="false">Loja</button><button data-t="rank" aria-selected="false">Ranking</button><button id="out" class="alt" style="border-style:dashed">Sair</button></nav>
+ <div id="nickbox" class="card hide"><div class="row"><input id="nickIn" maxlength="16" placeholder="Novo nickname" style="width:200px"><button class="btn" id="nickSave">Salvar</button></div><p class="msg" id="nickMsg"></p><p class="sm" id="nickInfo" style="margin:0"></p></div>
+ <nav><button data-t="race" aria-selected="true">Corrida</button><button data-t="mines" aria-selected="false">Mines</button><button data-t="crash" aria-selected="false">Foguete</button><button data-t="pix" aria-selected="false">Farejador</button><button data-t="slot" aria-selected="false">Slots</button><button data-t="dice" aria-selected="false">Dados</button><button data-t="shop" aria-selected="false">Loja</button><button data-t="rank" aria-selected="false">Ranking</button><button id="out" class="alt" style="border-style:dashed">Sair</button></nav>
 
  <section id="race" class="card">
   <div class="status" id="st"></div><div class="track" id="track"></div><div class="hs" id="hs"></div>
@@ -72,9 +77,9 @@ ol{padding:0;list-style:none;margin:0}li.rk{display:flex;justify-content:space-b
  </section>
 
  <section id="pix" class="card hide">
-  <div class="pstage" id="pstg"><div class="jac idle" id="jac">🦅</div><div class="pph" id="pph">📱 Aguardando Pix...</div></div>
-  <div class="row"><label class="sm">Aposta <input id="pB" type="number" min="1" value="100"></label><button class="btn" id="pGo">Mandar Pix pro Jacinto</button></div>
-  <p class="msg" id="pMsg">Manda um Pix pro Jacinto: 5% de chance de ele devolver 15x (100 viram 1.500). Nos outros 95%, ele some com o Pix.</p>
+  <div class="pstage" id="pstg"><div class="gnd"></div><div class="hole"></div><div class="find" id="find"></div><div class="jac idle" id="jac"><span style="display:inline-block;transform:scaleX(-1)">🐕</span></div><div class="pph" id="pph">🐕 Farejador aguardando pagamento...</div></div>
+  <div class="row"><label class="sm">Pagamento <input id="pB" type="number" min="1" value="100"></label><button class="btn" id="pGo">Pagar o Farejador</button></div>
+  <p class="msg" id="pMsg">Você paga o Farejador pra cavar: 5% de chance de ele achar 15x o que você pagou (100 viram 1.500). Nos outros 95%, só acha osso e bota velha.</p>
  </section>
 
  <section id="slot" class="card hide">
@@ -135,6 +140,13 @@ async function syncTime(){ // relógio do servidor do Firestore: igual para todo
 setInterval(()=>{if(uid)syncTime()},300000);
 let uid=null,uref=null,data=null,sel=0,cur=Math.floor(Date.now()/RT),roundBets=[],unsubBets=null,unsubU=null,busy=false,tt;
 const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.remove('hide');clearTimeout(tt);tt=setTimeout(()=>t.classList.add('hide'),3500)};
+function fail(e,ctx){const c=String(e&&e.code||''),m=String(e&&e.message||e);let t=m;
+ if(c.includes('permission-denied'))t='O Firestore recusou o acesso (permission-denied). No console do Firebase, abra Firestore → Regras, cole o conteúdo do arquivo firestore.rules e clique em Publicar. (Regras em "modo de teste" expiram depois de 30 dias.)';
+ else if(c.includes('failed-precondition')&&/index/i.test(m))t='O Firestore pede um índice: '+m;
+ else if(c.includes('resource-exhausted'))t='A cota gratuita diária do Firebase acabou. Volta amanhã.';
+ else if(c.includes('unavailable'))t='Sem conexão com o Firebase (rede, bloqueador de anúncios ou VPN?).';
+ console.error(ctx||'',e);if(c||/permission|insufficient/i.test(m)){const b=$('#fbanner');b.textContent='⚠️ '+t+(ctx?' ['+ctx+']':'');b.classList.remove('hide')}return t}
+addEventListener('unhandledrejection',ev=>{if(ev.reason)fail(ev.reason,'geral')});
 const say=(id,t,c)=>{$(id).textContent=t;$(id).className='msg '+(c||'')};
 const tx=fn=>runTransaction(db,async t=>fn(t,(await t.get(uref)).data()));
 async function take(id,msg){const a=Math.floor(+$(id).value);if(!(a>=1)){say(msg,'Aposta inválida.','lose');throw 0}
@@ -151,13 +163,16 @@ $('#loginGoogle').onclick=async()=>{$('#aerr').textContent='';try{await signInWi
 
 $('#out').onclick=()=>signOut(auth);
 
+let unsubRank=null;
 onAuthStateChanged(auth,async u=>{
- if(!u){uid=null;data=null;unsubU&&unsubU();$('#app').classList.add('hide');$('#auth').classList.remove('hide');return}
+ if(!u){uid=null;data=null;[unsubU,unsubRank,unsubBets].forEach(f=>f&&f());synced=false;$('#app').classList.add('hide');$('#auth').classList.remove('hide');return}
  uid=u.uid;uref=doc(db,'users',uid);$('#auth').classList.add('hide');$('#app').classList.remove('hide');fit();
- try{if(!(await getDoc(uref)).exists())await setDoc(uref,{nick:(u.displayName||(u.email||'jogador').split('@')[0]).replace(/[<>]/g,'').substring(0,16),coins:START,chars:{},lastClaim:Date.now(),zeroAt:null})}catch(e){toast('Erro ao criar conta: '+e.message)}
- await syncTime();cur=Math.floor(getNow()/RT);
- unsubU=onSnapshot(uref,s=>{if(!s.exists())return;data=s.data();$('#who').textContent=data.nick;$('#coins').textContent=data.coins.toLocaleString('pt-BR');opening||renderCol()});
- subBets();settlePending()});
+ unsubU=onSnapshot(uref,s=>{if(!s.exists())return;data=s.data();$('#who').textContent=data.nick||'Jogador';$('#coins').textContent=(data.coins||0).toLocaleString('pt-BR');opening||renderCol();renderNickInfo()},e=>fail(e,'usuário'));
+ subRank();
+ try{const sn=await getDoc(uref),def={nick:(u.displayName||(u.email||'jogador').split('@')[0]).replace(/[<>]/g,'').substring(0,16),coins:START,chars:{},lastClaim:Date.now(),zeroAt:null};
+  if(!sn.exists())await setDoc(uref,def);else{const d=sn.data(),fix={};for(const k in def)if(d[k]===undefined)fix[k]=def[k];if(Object.keys(fix).length)await setDoc(uref,fix,{merge:true})}}catch(e){toast(fail(e,'conta'))}
+ await Promise.race([syncTime(),sleep(5000)]);synced=true;cur=Math.floor(getNow()/RT);
+ subBets();try{await settlePending()}catch(e){fail(e,'apostas pendentes')}});
 /* ---------- corrida ---------- */
 $('#track').innerHTML=COL.map((c,i)=>`<div class="lane"><span class="nm" id="n${i}"></span><div class="run" id="r${i}"><b style="background:${c}"></b>🐎<span class="dust" id="d${i}">💨</span></div><div class="fin"></div></div>`).join('');
 $('#hs').innerHTML=COL.map((c,i)=>`<button data-h="${i}" aria-pressed="${i==0}"><i style="background:${c}"></i><span id="hn${i}"></span><small id="hb${i}"></small></button>`).join('');
@@ -165,14 +180,14 @@ $('#hs').onclick=e=>{const b=e.target.closest('button');if(!b)return;sel=+b.data
 let shown=0;function setNames(r){const n=raceOf(r).names;n.forEach((x,i)=>{$('#n'+i).textContent=x;$('#hn'+i).textContent=x});shown=r}
 function subBets(){unsubBets&&unsubBets();unsubBets=onSnapshot(query(collection(db,'bets'),where('round','==',cur)),s=>{roundBets=s.docs.map(d=>d.data());
  $('#pot').textContent=`Pote: ${roundBets.reduce((a,b)=>a+b.amount,0)} 🪙 · ${roundBets.length} aposta(s)`;
- COL.forEach((_,i)=>$('#hb'+i).textContent=roundBets.filter(b=>b.horse==i).map(b=>b.nick+' '+b.amount).join(', '))})}
+ COL.forEach((_,i)=>$('#hb'+i).textContent=roundBets.filter(b=>b.horse==i).map(b=>b.nick+' '+b.amount).join(', '))},e=>fail(e,'apostas'))}
 $('#betgo').onclick=async()=>{const amt=Math.floor(+$('#bet').value),r=cur;
  if(getNow()%RT>=BET_END)return toast('Apostas encerradas. Espere a próxima rodada.');
  if(!(amt>=1)||amt>data.coins)return toast('Aposta inválida ou saldo insuficiente.');
  try{await runTransaction(db,async t=>{const br=doc(db,'bets',r+'_'+uid),b=await t.get(br),u=await t.get(uref);
   if(b.exists())throw Error('Você já apostou nesta rodada.');if(u.data().coins<amt)throw Error('Saldo insuficiente.');
-  t.set(br,{round:r,uid,nick:u.data().nick,horse:sel,amount:amt,settled:false});t.update(uref,{coins:u.data().coins-amt})});
-  toast(`Apostou ${amt} em ${raceOf(r).names[sel]}!`)}catch(e){toast(e.message)}};
+  t.set(br,{round:r,uid,nick:u.data().nick||'Jogador',horse:sel,amount:amt,settled:false});t.update(uref,{coins:u.data().coins-amt})});
+  toast(`Apostou ${amt} em ${raceOf(r).names[sel]}!`)}catch(e){toast(fail(e,'aposta'))}};
 async function settle(r){if(!uid)return;const br=doc(db,'bets',r+'_'+uid),s=await getDoc(br);if(!s.exists()||s.data().settled)return;
  const all=(await getDocs(query(collection(db,'bets'),where('round','==',r)))).docs.map(d=>d.data()),{w,names}=raceOf(r),
  win=all.filter(b=>b.horse==w),lose=all.filter(b=>b.horse!=w),mine=s.data(),
@@ -181,7 +196,7 @@ async function settle(r){if(!uid)return;const br=doc(db,'bets',r+'_'+uid),s=awai
  toast(pay?`${names[w]} venceu! Você ganhou ${pay} moedas!`:`${names[w]} venceu. Você perdeu ${mine.amount}.`)}
 async function settlePending(){const s=await getDocs(query(collection(db,'bets'),where('uid','==',uid),where('settled','==',false)));for(const d of s.docs){const r=d.data().round;if(r<cur)await settle(r)}}
 function frame(){if(!synced)return requestAnimationFrame(frame);const now=getNow(),r=Math.floor(now/RT),off=now%RT;
- if(r!==cur){const p=cur;cur=r;if(uid){settle(p);subBets()}}
+ if(r!==cur){const p=cur;cur=r;if(uid){settle(p).catch(e=>fail(e,'resultado'));subBets()}}
  if(shown!==r)setNames(r);
  const {w,ft,ph,names}=raceOf(r);$('#last').textContent='Última vencedora: '+raceOf(r-1).names[raceOf(r-1).w];
  const t=Math.max(0,(off-BET_END)/1000),end=Math.max(...ft);
@@ -246,18 +261,26 @@ $('#cGo').onclick=async()=>{if(fly){if(!cashed)cash(cm);return}
   fly=0;$('#cGo').textContent='Apostar e decolar';$('#cGo').classList.remove('g');if(!cashed)say('#cMsg',`Explodiu em ${crash.toFixed(2)}x. Você perdeu ${cB} moedas.`,'lose');
   setTimeout(()=>{if(!fly)pad()},1800)})(t0)};
 
-/* ---------- jacinto pix ---------- */
+/* ---------- farejador de pix ---------- */
 const PIXP=.05,PIXM=15;let pBusy=0;const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 $('#pGo').onclick=async()=>{if(pBusy)return;let a;try{a=await take('#pB','#pMsg')}catch(e){return}
- pBusy=1;$('#pGo').disabled=true;const ok=rnd()<PIXP,jac=$('#jac'),ph=$('#pph'),st=$('#pstg'),w=st.clientWidth;
- jac.classList.remove('idle');ph.className='pph';ph.textContent='📱 Pix enviado pro Jacinto...';say('#pMsg','Jacinto está conferindo o Pix...');
- await jac.animate([{transform:`translate(${-w/2-60}px,-40px)`},{transform:'translate(0,0)'}],{duration:900,easing:'ease-out',fill:'forwards'}).finished;
- await jac.animate(Array.from({length:12},(_,i)=>({transform:`translate(${i%2?-14:14}px,${i%2?-22:-4}px) rotate(${i%2?-10:10}deg)`})),{duration:1500,fill:'forwards'}).finished;
- if(ok){const g=a*PIXM;await give(g);ph.textContent=`✅ PIX RECEBIDO: +${g} 🪙`;ph.classList.add('ok');say('#pMsg',`O Jacinto devolveu o Pix! Você ganhou ${g} moedas!`,'win');
-  burst(st,w/2,90,30,['💰','🪙','💸','🎉','🤑'],150);jac.animate([{transform:'translateY(0) scale(1)'},{transform:'translateY(-30px) scale(1.4)'},{transform:'translateY(0) scale(1)'}],{duration:700,fill:'forwards'})}
- else{ph.textContent='❌ Pix não encontrado';ph.classList.add('bad');say('#pMsg',`O Jacinto sumiu com seus ${a} Pix. Tente de novo!`,'lose');burst(st,w/2,90,8,['💨'],90);
-  await jac.animate([{transform:'translate(0,0) scale(1)',opacity:1},{transform:`translate(${w/2+80}px,-120px) scale(.5)`,opacity:0}],{duration:1100,easing:'ease-in',fill:'forwards'}).finished}
- await sleep(1700);jac.getAnimations().forEach(x=>x.cancel());jac.classList.add('idle');ph.className='pph';ph.textContent='📱 Aguardando Pix...';pBusy=0;$('#pGo').disabled=false};
+ pBusy=1;$('#pGo').disabled=true;const ok=rnd()<PIXP,dog=$('#jac'),ph=$('#pph'),st=$('#pstg'),fd=$('#find'),w=st.clientWidth,hx=w/2+44,hy=st.clientHeight-41;
+ dog.classList.remove('idle');ph.className='pph';ph.textContent='🐕 Farejador saiu em busca do Pix...';say('#pMsg','O Farejador está procurando...');
+ await dog.animate([{transform:`translate(${-w/2-70}px,0)`},{transform:'translate(0,0)'}],{duration:1100,easing:'ease-out',fill:'forwards'}).finished;
+ ph.textContent='👃 Farejando...';
+ await dog.animate(Array.from({length:10},(_,i)=>({transform:`translate(${i%2?-6:6}px,${i%2?4:-3}px) rotate(${i%2?-6:6}deg)`})),{duration:1300,fill:'forwards'}).finished;
+ ph.textContent='⛏️ Achou algo! Cavando...';
+ const dig=dog.animate(Array.from({length:14},(_,i)=>({transform:`translate(${i%2?10:2}px,${i%2?16:0}px) rotate(${i%2?14:-4}deg)`})),{duration:1600,fill:'forwards'});
+ for(let i=0;i<8;i++){burst(st,hx,hy,5,['🟫','🟤','🪨'],70);await sleep(200)}
+ await dig.finished;
+ fd.textContent=ok?'💰':rnd()<.5?'🦴':'🥾';fd.style.left=hx+'px';fd.style.top=(hy-34)+'px';fd.style.display='block';
+ fd.animate([{transform:'translate(-50%,40px) scale(.2)',opacity:0},{transform:'translate(-50%,-50px) scale(1.6)',opacity:1},{transform:'translate(-50%,-34px) scale(1.3)',opacity:1}],{duration:700,easing:'cubic-bezier(.2,1.4,.4,1)',fill:'forwards'});
+ if(ok){const g=a*PIXM;await give(g);ph.textContent=`✅ PIX ENCONTRADO: +${g} 🪙`;ph.classList.add('ok');say('#pMsg',`O Farejador achou um Pix! Você ganhou ${g} moedas!`,'win');
+  burst(st,hx,hy-40,30,['💰','🪙','💸','🎉','🤑'],150);dog.animate([{transform:'translateY(0)'},{transform:'translateY(-34px)'},{transform:'translateY(0)'},{transform:'translateY(-24px)'},{transform:'translateY(0)'}],{duration:1100,fill:'forwards'})}
+ else{ph.textContent=`❌ Só achou ${fd.textContent=='🦴'?'um osso':'uma bota velha'}`;ph.classList.add('bad');say('#pMsg',`O Farejador não achou nada de valor. Você perdeu ${a} moedas.`,'lose');
+  dog.animate([{transform:'rotate(0)'},{transform:'rotate(-8deg) translateY(6px)'}],{duration:500,fill:'forwards'})}
+ await sleep(2000);dog.getAnimations().forEach(x=>x.cancel());fd.getAnimations().forEach(x=>x.cancel());fd.style.display='none';
+ dog.classList.add('idle');ph.className='pph';ph.textContent='🐕 Farejador aguardando pagamento...';pBusy=0;$('#pGo').disabled=false};
 
 /* ---------- slots ---------- */
 const SY=[['🍒',.3,6],['🍋',.25,10],['🔔',.2,20],['⭐',.13,40],['💎',.08,100],['7️⃣',.04,300]],reels=[...document.querySelectorAll('.reel')];
@@ -292,7 +315,18 @@ $('#buy').onclick=async()=>{if(opening)return;if(data.coins<BOX)return toast('Mo
  rev.innerHTML=`<div class="reveal" style="border-color:${col};box-shadow:0 0 ${20+ri*12}px ${col}88"><div style="font-size:3.4rem">${c[5]}</div><b style="color:${col}">${c[2]}</b><div><b>${c[1]}</b></div><div class="sm">+${c[4]} moedas/min · 1 em ${Math.round(100/c[3])}</div></div>`;
  opening=0;$('#buy').disabled=false;renderCol()};
 function renderCol(){$('#inc').textContent='+'+income(data.chars)+'/min';$('#col').innerHTML=CH.map(c=>{const n=(data.chars||{})[c[0]]||0;return`<div class="ch ${n?'':'no'}" style="border-color:${n?RC[c[2]]:'var(--l)'}"><div style="font-size:1.8rem">${c[5]}</div><b>${c[1]}</b><div class="sm" style="color:${RC[c[2]]}">${c[2]} · 1 em ${Math.round(100/c[3])}</div><div class="sm">+${c[4]}/min · x${n}</div></div>`}).join('')}
-onSnapshot(query(collection(db,'users'),orderBy('coins','desc'),limit(20)),s=>{$('#rl').innerHTML=s.docs.map((d,i)=>{const u=d.data();return`<li class="rk ${d.id==uid?'me':''}"><span>${i+1}. ${u.nick.replace(/</g,'&lt;')}</span><b>${u.coins.toLocaleString('pt-BR')} 🪙</b></li>`}).join('')},()=>{});
+function subRank(){unsubRank&&unsubRank();unsubRank=onSnapshot(query(collection(db,'users'),orderBy('coins','desc'),limit(20)),s=>{$('#rl').innerHTML=s.docs.map((d,i)=>{const u=d.data();return`<li class="rk ${d.id==uid?'me':''}"><span>${i+1}. ${String(u.nick||'Jogador').replace(/</g,'&lt;')}</span><b>${(u.coins||0).toLocaleString('pt-BR')} 🪙</b></li>`}).join('')},e=>{$('#rl').innerHTML='<li class="rk">Não consegui carregar o ranking.</li>';fail(e,'ranking')})}
+const WEEK=7*864e5;
+function fmtWait(ms){const m=Math.ceil(ms/60000),d=Math.floor(m/1440),h=Math.floor(m%1440/60);return d?`${d}d ${h}h`:h?`${h}h ${m%60}min`:`${m}min`}
+function renderNickInfo(){if(!data)return;const w=(data.nickAt||0)+WEEK-getNow();$('#nickInfo').textContent=w>0?`Você poderá trocar de novo em ${fmtWait(w)}.`:'Você pode trocar agora. Depois disso, só 1 vez por semana.'}
+$('#nickEdit').onclick=()=>{$('#nickbox').classList.toggle('hide');if(data)$('#nickIn').value=data.nick||'';say('#nickMsg','');renderNickInfo()};
+$('#nickSave').onclick=async()=>{const n=$('#nickIn').value.trim().replace(/\s+/g,' ');
+ if(!/^[\p{L}\p{N}_. -]{3,16}$/u.test(n))return say('#nickMsg','Use 3 a 16 caracteres: letras, números, espaço, _ . -','lose');
+ if(n===data.nick)return say('#nickMsg','Esse já é o seu nome.','lose');
+ const w=(data.nickAt||0)+WEEK-getNow();if(w>0)return say('#nickMsg',`Você só pode trocar de novo em ${fmtWait(w)}.`,'lose');
+ try{const dup=await getDocs(query(collection(db,'users'),where('nick','==',n)));if(dup.docs.some(d=>d.id!==uid))return say('#nickMsg','Esse nome já está em uso.','lose');
+  await tx((t,u)=>{if((u.nickAt||0)+WEEK>getNow())throw Error('Você já trocou o nome essa semana.');t.update(uref,{nick:n,nickAt:getNow()})});
+  say('#nickMsg','Nome alterado!','win');setTimeout(()=>$('#nickbox').classList.add('hide'),1200)}catch(e){say('#nickMsg',fail(e,'nickname'),'lose')}};
 const TABS=['race','mines','crash','pix','slot','dice','shop','rank'];
 document.querySelectorAll('nav button[data-t]').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button[data-t]').forEach(x=>x.setAttribute('aria-selected',x===b));TABS.forEach(t=>$('#'+t).classList.toggle('hide',t!==b.dataset.t));if(b.dataset.t=='crash')fit()});
 </script></body></html>
