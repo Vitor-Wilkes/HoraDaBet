@@ -109,12 +109,12 @@ import {getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChange
 import {getFirestore,doc,setDoc,getDoc,getDocs,runTransaction,collection,query,where,orderBy,limit,onSnapshot,serverTimestamp,getDocFromServer} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyB5gpBAqhzhLhRBCkqwKc9_9piey1vDok8",
-  authDomain: "horadabet-c92e4.firebaseapp.com",
-  projectId: "horadabet-c92e4",
-  storageBucket: "horadabet-c92e4.firebasestorage.app",
-  messagingSenderId: "312348867266",
-  appId: "1:312348867266:web:ec568e363d962b1467d95b"
+  apiKey: "AIzaSyC0D4ErGImTz9hIGuI2WfN5Th7s7s1kqAc",
+  authDomain: "horadabet-a48b6.firebaseapp.com",
+  projectId: "horadabet-a48b6",
+  storageBucket: "horadabet-a48b6.firebasestorage.app",
+  messagingSenderId: "932771548782",
+  appId: "1:932771548782:web:29df4b76187980b3c9607f"
 };
 
 const $=s=>document.querySelector(s);
@@ -137,7 +137,7 @@ let timeOffset=0,synced=false;const getNow=()=>Date.now()+timeOffset;
 async function syncTime(){ // relógio do servidor do Firestore: igual para todo mundo
  try{const t0=Date.now();await setDoc(uref,{ts:serverTimestamp()},{merge:true});const t1=Date.now(),sv=(await getDocFromServer(uref)).data().ts.toMillis();timeOffset=sv-(t0+t1)/2}
  catch(e){console.warn('Sem sincronia de relógio',e);toast('Não consegui sincronizar o relógio. Usando o do aparelho.')}synced=true}
-setInterval(()=>{if(uid)syncTime()},300000);
+setInterval(()=>{if(uid)syncTime()},1800000);
 let uid=null,uref=null,data=null,sel=0,cur=Math.floor(Date.now()/RT),roundBets=[],unsubBets=null,unsubU=null,busy=false,tt;
 const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.remove('hide');clearTimeout(tt);tt=setTimeout(()=>t.classList.add('hide'),3500)};
 function fail(e,ctx){const c=String(e&&e.code||''),m=String(e&&e.message||e);let t=m;
@@ -210,8 +210,7 @@ requestAnimationFrame(frame);
 
 /* ---------- renda passiva e recarga ---------- */
 setInterval(async()=>{if(!uid||!data||busy)return;const now=getNow();busy=true;
- try{if(accrue(data,now)>=1)await tx((t,u)=>{const x=accrue(u,now);if(x>=1)t.update(uref,{coins:u.coins+x,lastClaim:now})});
-  else if(!income(data.chars)&&now-(data.lastClaim||now)>600000)await setDoc(uref,{lastClaim:now},{merge:true});
+ try{if(now-(data.lastClaim||now)>=120000&&accrue(data,now)>=1)await tx((t,u)=>{const x=accrue(u,now);if(x>=1)t.update(uref,{coins:u.coins+x,lastClaim:now})});
   if(data.coins<=0){if(!data.zeroAt)await setDoc(uref,{zeroAt:now},{merge:true});
    else if(now-data.zeroAt>=180000){const g=50+Math.floor(rnd()*51);await tx((t,u)=>{if(u.coins<=0)t.update(uref,{coins:g,zeroAt:null})});toast(`Você ganhou ${g} moedas para voltar ao jogo!`)}}
   else if(data.zeroAt)await setDoc(uref,{zeroAt:null},{merge:true})}catch(e){}busy=false},5000);
