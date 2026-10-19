@@ -56,12 +56,12 @@ ol{padding:0;list-style:none;margin:0}li.rk{display:flex;justify-content:space-b
  <div class="top"><div><h1>HoraDaBet</h1><div class="sm"><span id="who"></span> <button class="chip" id="nickEdit" aria-label="Trocar nickname">✏️ trocar nome</button> · <span id="inc"></span></div></div>
   <div class="bank"><small>seu saldo <span id="zero"></span></small><span id="coins">0</span> 🪙</div></div>
  <div id="nickbox" class="card hide"><div class="row"><input id="nickIn" maxlength="16" placeholder="Novo nickname" style="width:200px"><button class="btn" id="nickSave">Salvar</button></div><p class="msg" id="nickMsg"></p><p class="sm" id="nickInfo" style="margin:0"></p></div>
- <nav><button data-t="race" aria-selected="true">Corrida</button><button data-t="mines" aria-selected="false">Mines</button><button data-t="crash" aria-selected="false">Foguete</button><button data-t="pix" aria-selected="false">Farejador</button><button data-t="slot" aria-selected="false">Slots</button><button data-t="dice" aria-selected="false">Dados</button><button data-t="shop" aria-selected="false">Loja</button><button data-t="rank" aria-selected="false">Ranking</button><button id="out" class="alt" style="border-style:dashed">Sair</button></nav>
+ <nav><button data-t="race" aria-selected="true">Corrida</button><button data-t="mines" aria-selected="false">Mines</button><button data-t="crash" aria-selected="false">Foguete</button><button data-t="pix" aria-selected="false">Farejador</button><button data-t="slot" aria-selected="false">Slots</button><button data-t="dice" aria-selected="false">Dados</button><button data-t="send" aria-selected="false">Enviar Pix</button><button data-t="shop" aria-selected="false">Loja</button><button data-t="rank" aria-selected="false">Ranking</button><button id="out" class="alt" style="border-style:dashed">Sair</button></nav>
 
  <section id="race" class="card">
   <div class="status" id="st"></div><div class="track" id="track"></div><div class="hs" id="hs"></div>
   <div class="row"><input id="bet" type="number" min="1" value="50"><button class="btn" id="betgo">Apostar</button><span class="sm" id="pot"></span></div>
-  <p class="sm" id="last"></p>
+  <p class="sm" id="last"></p><p class="sm" id="clk"></p>
   <p class="sm">Corrida a cada 2 min, igual para todos, com cavalos novos toda vez. Apostas fecham aos 90s. Quem acertar leva 200 + a própria aposta + parte igual do que os perdedores apostaram. Também dá para só assistir.</p>
  </section>
 
@@ -95,8 +95,14 @@ ol{padding:0;list-style:none;margin:0}li.rk{display:flex;justify-content:space-b
   <p class="msg" id="dMsg">Sorteio de 0 a 100. Quanto mais arriscado, mais paga.</p>
  </section>
 
+ <section id="send" class="card hide">
+  <h2>Enviar Pix</h2><p class="sm">Mande moedas para qualquer jogador. O valor sai da sua conta na hora e entra na conta dele assim que ele estiver com o jogo aberto.</p>
+  <div class="row"><input id="xTo" maxlength="16" placeholder="Nickname do jogador" autocomplete="off" style="width:220px"><input id="xAmt" type="number" min="1" value="50"><button class="btn g" id="xGo">Enviar Pix</button></div>
+  <p class="msg" id="xMsg"></p><p class="sm">Dica: no Ranking tem um botão 💸 Pix ao lado de cada jogador.</p>
+  <h2 style="margin:14px 0 8px">Últimos Pix</h2><ol id="xHist"><li class="rk sm">Nenhum Pix ainda.</li></ol>
+ </section>
  <section id="shop" class="card hide">
-  <h2>Loja de caixas</h2><p class="sm">Cada personagem rende moedas por minuto (teto de 120/min no total, até 30 min acumulados offline).</p>
+  <h2>Loja de caixas</h2><p class="sm">Compre caixas para ganhar personagens e escolha qual usar. Só o personagem em uso rende moedas por minuto (os rendimentos não somam). Até 30 min acumulam offline.</p>
   <div class="row"><button class="btn" id="buy">Abrir caixa · 75 🪙</button></div><div id="rev"></div>
   <h2 style="margin:18px 0 8px">Coleção</h2><div class="gr" id="col"></div>
  </section>
@@ -120,24 +126,38 @@ const firebaseConfig = {
 const $=s=>document.querySelector(s);
 if(firebaseConfig.apiKey.startsWith("COLE")){$('#cfgerr').classList.remove('hide');throw 0}
 const app=initializeApp(firebaseConfig),auth=getAuth(app),db=getFirestore(app);
-const RT=120000,BET_END=90000,START=500,BOX=75,CAP=120,rnd=Math.random;
+const RT=120000,BET_END=90000,START=500,BOX=75,rnd=Math.random;
 const COL=['#e0457b','#2fa37f','#3b82f6','#f59e0b','#a855f7','#e5e7eb'];
 const NAMES=['Pé de Pano','Nem Vem Que Não Tem','Vai Que Dá','Tá Pago','Corre Pra Quê','Zé do Pasto','Pangaré Premium','Sextou Veloz','Aposta do Cunhado','Trovão de Pastel','Dinheiro Sumiu','Foi Só um Giro','Mané Galopante','Café com Leite','Rapidinho Mas Não Muito','Mais Um Pra Casa','Pix Errado','Boleto Vencido','Segunda Chance','Cavalo do Primo','Uber de Pasto','Feijão Tropeiro','Meu Último Real','Já Perdi Mesmo','Tigrinho Zero','Ele Vai Ganhar (Mentira)','Chora Depois','Pônei Ambicioso','Passa Fome Veloz','Saiu o Sol','Capim Turbo','Galopa Que Eu Pago'];
 const RC={Comum:'#9ca3af',Incomum:'#4ade80',Raro:'#60a5fa',Épico:'#c084fc',Lendário:'#fbbf24',Mítico:'#f43f5e'};
 const CH=[['a1','Tiozão do Bar','Comum',30,1,'🍺'],['a2','Cambista Iniciante','Comum',25,1,'🎟️'],['b1','Corretor Duvidoso','Incomum',18,2,'📈'],['b2','Tigrinho de Estimação','Incomum',12,2,'🐯'],['c1','Influencer da Sorte','Raro',10,5,'🤳'],['d1','Jóquei Aposentado','Épico',4,12,'🏇'],['e1','Mestre dos Palpites','Lendário',.9,30,'🔮'],['f1','Cavalo Dourado','Mítico',.1,100,'🏆']];
 const CHM=Object.fromEntries(CH.map(c=>[c[0],c]));
-const income=ch=>Math.min(CAP,Object.entries(ch||{}).reduce((a,[k,n])=>a+(CHM[k]?CHM[k][4]*n:0),0));
-const accrue=(u,now)=>Math.floor(income(u.chars)*Math.min(30,(now-(u.lastClaim||now))/60000));
+const income=u=>{const c=CHM[u&&u.equipped];return c&&((u.chars||{})[c[0]]||0)>0?c[4]:0};
+const accrue=(u,now)=>Math.max(0,Math.floor(income(u)*Math.min(30,(now-(u.lastClaim||now))/60000)));
 function rng(s){let a=s>>>0;return()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 function raceOf(r){const R=rng(r*7919+13),w=Math.floor(R()*6),ft=[],ph=[],pool=NAMES.map((_,i)=>i);
  for(let i=0;i<6;i++){ft.push(i==w?13:13.6+R()*3);ph.push(R()*6)}
  const names=[];for(let i=0;i<6;i++)names.push(NAMES[pool.splice(Math.floor(R()*pool.length),1)[0]]);return{w,ft,ph,names}}
 
-let timeOffset=0,synced=false;const getNow=()=>Date.now()+timeOffset;
-async function syncTime(){ // relógio do servidor do Firestore: igual para todo mundo
- try{const t0=Date.now();await setDoc(uref,{ts:serverTimestamp()},{merge:true});const t1=Date.now(),sv=(await getDocFromServer(uref)).data().ts.toMillis();timeOffset=sv-(t0+t1)/2}
- catch(e){console.warn('Sem sincronia de relógio',e);toast('Não consegui sincronizar o relógio. Usando o do aparelho.')}synced=true}
-setInterval(()=>{if(uid)syncTime()},1800000);
+let timeOffset=0,synced=false,syncSrc='',syncErr=0,syncing=0,tick=0;const getNow=()=>Date.now()+timeOffset;
+let unsubPx=[],xIn=[],xOut=[],claiming=new Set(),xPick=null,xBusy=0,mig=0;
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const withTO=(p,ms)=>Promise.race([p,new Promise((_,j)=>setTimeout(()=>j(Error('timeout')),ms))]);
+const isoMs=x=>Date.parse(String(x).replace(/(\.\d{3})\d*/,'$1'));
+// Várias fontes de hora de servidor, todas medidas em paralelo. Vence a de menor erro estimado.
+const SRC=[
+ ['Firebase',async()=>{const t0=Date.now();await setDoc(uref,{ts:serverTimestamp()},{merge:true});const t1=Date.now(),sv=(await getDocFromServer(uref)).data().ts.toMillis();return{sv,t0,t1,prec:0}}],
+ ['worldtimeapi',async()=>{const t0=Date.now(),j=await(await fetch('https://worldtimeapi.org/api/timezone/Etc/UTC',{cache:'no-store'})).json(),t1=Date.now();return{sv:isoMs(j.utc_datetime),t0,t1,prec:30}}],
+ ['timeapi.io',async()=>{const t0=Date.now(),j=await(await fetch('https://timeapi.io/api/time/current/zone?timeZone=UTC',{cache:'no-store'})).json(),t1=Date.now(),d=String(j.dateTime);return{sv:isoMs(/Z|[+-]\d\d:\d\d$/.test(d)?d:d+'Z'),t0,t1,prec:30}}],
+ ['cabeçalho do site',async()=>{if(!/^https?:/.test(location.protocol))throw 0;const t0=Date.now(),r=await fetch(location.pathname+'?_='+t0,{method:'HEAD',cache:'no-store'}),t1=Date.now(),d=r.headers.get('date');if(!d)throw 0;return{sv:Date.parse(d)+500+(+r.headers.get('age')||0)*1000,t0,t1,prec:1000}}]
+];
+async function syncTime(){if(syncing)return;syncing=1;
+ const out=(await Promise.allSettled(SRC.map(async([n,f])=>{const r=await withTO(f(),6000);return{...r,n,score:(r.t1-r.t0)/2+r.prec}}))).filter(x=>x.status=='fulfilled'&&isFinite(x.value.sv)).map(x=>x.value);
+ if(out.length){out.sort((a,b)=>a.score-b.score);const b=out[0],off=b.sv-(b.t0+b.t1)/2;
+  if(!synced||Math.abs(off-timeOffset)>250)timeOffset=off;syncSrc=b.n;syncErr=Math.round(b.score);synced=true}
+ syncing=0;showSync()}
+function showSync(){const e=$('#clk');if(e)e.textContent=synced?`🕒 Relógio do servidor (${syncSrc}) · precisão ±${syncErr}ms`:'⚠️ Não consegui sincronizar o relógio com o servidor. Tentando de novo...'}
+setInterval(()=>{if(uid&&(!synced||++tick%30==0))syncTime()},10000);setInterval(()=>{if(uid)syncTime()},1800000);
 let uid=null,uref=null,data=null,sel=0,cur=Math.floor(Date.now()/RT),roundBets=[],unsubBets=null,unsubU=null,busy=false,tt;
 const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.remove('hide');clearTimeout(tt);tt=setTimeout(()=>t.classList.add('hide'),3500)};
 function fail(e,ctx){const c=String(e&&e.code||''),m=String(e&&e.message||e);let t=m;
@@ -165,13 +185,13 @@ $('#out').onclick=()=>signOut(auth);
 
 let unsubRank=null;
 onAuthStateChanged(auth,async u=>{
- if(!u){uid=null;data=null;[unsubU,unsubRank,unsubBets].forEach(f=>f&&f());synced=false;$('#app').classList.add('hide');$('#auth').classList.remove('hide');return}
+ if(!u){uid=null;data=null;[unsubU,unsubRank,unsubBets].forEach(f=>f&&f());unsubPx.forEach(f=>f());synced=false;$('#app').classList.add('hide');$('#auth').classList.remove('hide');return}
  uid=u.uid;uref=doc(db,'users',uid);$('#auth').classList.add('hide');$('#app').classList.remove('hide');fit();
- unsubU=onSnapshot(uref,s=>{if(!s.exists())return;data=s.data();$('#who').textContent=data.nick||'Jogador';$('#coins').textContent=(data.coins||0).toLocaleString('pt-BR');opening||renderCol();renderNickInfo()},e=>fail(e,'usuário'));
- subRank();
+ unsubU=onSnapshot(uref,s=>{if(!s.exists())return;data=s.data();$('#who').textContent=data.nick||'Jogador';$('#coins').textContent=(data.coins||0).toLocaleString('pt-BR');if(data.equipped===undefined&&data.chars&&Object.keys(data.chars).length)migrate();opening||renderCol();renderNickInfo()},e=>fail(e,'usuário'));
+ subRank();subPix();
  try{const sn=await getDoc(uref),def={nick:(u.displayName||(u.email||'jogador').split('@')[0]).replace(/[<>]/g,'').substring(0,16),coins:START,chars:{},lastClaim:Date.now(),zeroAt:null};
   if(!sn.exists())await setDoc(uref,def);else{const d=sn.data(),fix={};for(const k in def)if(d[k]===undefined)fix[k]=def[k];if(Object.keys(fix).length)await setDoc(uref,fix,{merge:true})}}catch(e){toast(fail(e,'conta'))}
- await Promise.race([syncTime(),sleep(5000)]);synced=true;cur=Math.floor(getNow()/RT);
+ await Promise.race([syncTime(),sleep(8000)]);cur=Math.floor(getNow()/RT);
  subBets();try{await settlePending()}catch(e){fail(e,'apostas pendentes')}});
 /* ---------- corrida ---------- */
 $('#track').innerHTML=COL.map((c,i)=>`<div class="lane"><span class="nm" id="n${i}"></span><div class="run" id="r${i}"><b style="background:${c}"></b>🐎<span class="dust" id="d${i}">💨</span></div><div class="fin"></div></div>`).join('');
@@ -182,6 +202,7 @@ function subBets(){unsubBets&&unsubBets();unsubBets=onSnapshot(query(collection(
  $('#pot').textContent=`Pote: ${roundBets.reduce((a,b)=>a+b.amount,0)} 🪙 · ${roundBets.length} aposta(s)`;
  COL.forEach((_,i)=>$('#hb'+i).textContent=roundBets.filter(b=>b.horse==i).map(b=>b.nick+' '+b.amount).join(', '))},e=>fail(e,'apostas'))}
 $('#betgo').onclick=async()=>{const amt=Math.floor(+$('#bet').value),r=cur;
+ if(!synced)return toast('Ainda sincronizando o relógio. Aguarde um instante.');
  if(getNow()%RT>=BET_END)return toast('Apostas encerradas. Espere a próxima rodada.');
  if(!(amt>=1)||amt>data.coins)return toast('Aposta inválida ou saldo insuficiente.');
  try{await runTransaction(db,async t=>{const br=doc(db,'bets',r+'_'+uid),b=await t.get(br),u=await t.get(uref);
@@ -195,7 +216,7 @@ async function settle(r){if(!uid)return;const br=doc(db,'bets',r+'_'+uid),s=awai
  await runTransaction(db,async t=>{const b=await t.get(br),u=await t.get(uref);if(b.data().settled)return;t.update(br,{settled:true,payout:pay});if(pay)t.update(uref,{coins:u.data().coins+pay})});
  toast(pay?`${names[w]} venceu! Você ganhou ${pay} moedas!`:`${names[w]} venceu. Você perdeu ${mine.amount}.`)}
 async function settlePending(){const s=await getDocs(query(collection(db,'bets'),where('uid','==',uid),where('settled','==',false)));for(const d of s.docs){const r=d.data().round;if(r<cur)await settle(r)}}
-function frame(){if(!synced)return requestAnimationFrame(frame);const now=getNow(),r=Math.floor(now/RT),off=now%RT;
+function frame(){if(!synced){$('#st').textContent='Sincronizando relógio com o servidor...';return requestAnimationFrame(frame)}const now=getNow(),r=Math.floor(now/RT),off=now%RT;
  if(r!==cur){const p=cur;cur=r;if(uid){settle(p).catch(e=>fail(e,'resultado'));subBets()}}
  if(shown!==r)setNames(r);
  const {w,ft,ph,names}=raceOf(r);$('#last').textContent='Última vencedora: '+raceOf(r-1).names[raceOf(r-1).w];
@@ -302,7 +323,7 @@ $('#dLo').onclick=()=>roll(1);$('#dHi').onclick=()=>roll(0);
 let opening=0;
 $('#buy').onclick=async()=>{if(opening)return;if(data.coins<BOX)return toast('Moedas insuficientes.');let r=rnd()*100,c=CH[0];for(const x of CH){r-=x[3];if(r<=0){c=x;break}}const now=getNow();
  opening=1;$('#buy').disabled=true;
- try{await tx((t,u)=>{if(u.coins<BOX)throw Error('Moedas insuficientes.');const ch={...(u.chars||{})};ch[c[0]]=(ch[c[0]]||0)+1;t.update(uref,{coins:u.coins-BOX+accrue(u,now),chars:ch,lastClaim:now})})}catch(e){opening=0;$('#buy').disabled=false;return toast(e.message)}
+ try{await tx((t,u)=>{if(u.coins<BOX)throw Error('Moedas insuficientes.');const ch={...(u.chars||{})};ch[c[0]]=(ch[c[0]]||0)+1;t.update(uref,{coins:u.coins-BOX+accrue(u,now),chars:ch,lastClaim:now,...(u.equipped?{}:{equipped:c[0]})})})}catch(e){opening=0;$('#buy').disabled=false;return toast(e.message)}
  const col=RC[c[2]],ri=Object.keys(RC).indexOf(c[2]),cols=Object.values(RC),rev=$('#rev');
  rev.innerHTML='<div class="stage" id="stg"><div class="box" id="box">🎁</div></div>';const box=$('#box'),stg=$('#stg');
  box.animate(Array.from({length:18},(_,i)=>({transform:`rotate(${i%2?-1:1}${(3+i*.9).toFixed(1)}deg) scale(${(1+i*.035).toFixed(3)})`})),{duration:1900,easing:'ease-in'});
@@ -311,10 +332,17 @@ $('#buy').onclick=async()=>{if(opening)return;if(data.coins<BOX)return toast('Mo
  box.style.display='none';burst(stg,stg.clientWidth/2,85,18+ri*10,['✨','⭐','🎉',c[5]],110+ri*28);
  if(ri>=3)document.body.animate(Array.from({length:8},(_,i)=>({transform:`translate(${i%2?-8:8}px,${i%2?4:-4}px)`})),{duration:450});
  await sleep(1000);
- rev.innerHTML=`<div class="reveal" style="border-color:${col};box-shadow:0 0 ${20+ri*12}px ${col}88"><div style="font-size:3.4rem">${c[5]}</div><b style="color:${col}">${c[2]}</b><div><b>${c[1]}</b></div><div class="sm">+${c[4]} moedas/min · 1 em ${Math.round(100/c[3])}</div></div>`;
+ rev.innerHTML=`<div class="reveal" style="border-color:${col};box-shadow:0 0 ${20+ri*12}px ${col}88"><div style="font-size:3.4rem">${c[5]}</div><b style="color:${col}">${c[2]}</b><div><b>${c[1]}</b></div><div class="sm">+${c[4]} moedas/min · 1 em ${Math.round(100/c[3])}</div>${data.equipped===c[0]?'<div class="sm win">✔ Em uso</div>':'<button class="btn" id="useNew" style="margin-top:10px">Usar este</button>'}</div>`;
+ const un=$('#useNew');if(un)un.onclick=()=>equip(c[0]);
  opening=0;$('#buy').disabled=false;renderCol()};
-function renderCol(){$('#inc').textContent='+'+income(data.chars)+'/min';$('#col').innerHTML=CH.map(c=>{const n=(data.chars||{})[c[0]]||0;return`<div class="ch ${n?'':'no'}" style="border-color:${n?RC[c[2]]:'var(--l)'}"><div style="font-size:1.8rem">${c[5]}</div><b>${c[1]}</b><div class="sm" style="color:${RC[c[2]]}">${c[2]} · 1 em ${Math.round(100/c[3])}</div><div class="sm">+${c[4]}/min · x${n}</div></div>`}).join('')}
-function subRank(){unsubRank&&unsubRank();unsubRank=onSnapshot(query(collection(db,'users'),orderBy('coins','desc'),limit(20)),s=>{$('#rl').innerHTML=s.docs.map((d,i)=>{const u=d.data();return`<li class="rk ${d.id==uid?'me':''}"><span>${i+1}. ${String(u.nick||'Jogador').replace(/</g,'&lt;')}</span><b>${(u.coins||0).toLocaleString('pt-BR')} 🪙</b></li>`}).join('')},e=>{$('#rl').innerHTML='<li class="rk">Não consegui carregar o ranking.</li>';fail(e,'ranking')})}
+function renderCol(){const eq=data.equipped,ec=CHM[eq],has=ec&&((data.chars||{})[eq]||0)>0;
+ $('#inc').textContent=has?`${ec[5]} ${ec[1]} · +${ec[4]}/min`:'nenhum personagem em uso';
+ $('#col').innerHTML=CH.map(c=>{const n=(data.chars||{})[c[0]]||0,on=has&&eq===c[0];return`<div class="ch ${n?'':'no'}" style="border-color:${on?'var(--good)':n?RC[c[2]]:'var(--l)'};${on?'box-shadow:inset 0 0 0 2px var(--good)':''}"><div style="font-size:1.8rem">${c[5]}</div><b>${c[1]}</b><div class="sm" style="color:${RC[c[2]]}">${c[2]} · 1 em ${Math.round(100/c[3])}</div><div class="sm">+${c[4]}/min · x${n}</div>${n?`<button class="btn ${on?'g':'alt'}" style="margin-top:8px;padding:7px 12px;width:100%" data-use="${c[0]}">${on?'✔ Em uso':'Usar'}</button>`:''}</div>`}).join('')}
+$('#col').onclick=e=>{const b=e.target.closest('[data-use]');if(b)equip(b.dataset.use)};
+async function equip(id){try{await tx((t,u)=>{if(!((u.chars||{})[id]>0))throw Error('Você não tem esse personagem.');if(u.equipped===id)return;const now=getNow();t.update(uref,{coins:u.coins+accrue(u,now),lastClaim:now,equipped:id})});toast(CHM[id][1]+' agora está em uso!')}catch(e){toast(fail(e,'usar personagem'))}}
+async function migrate(){if(mig)return;mig=1;try{await tx((t,u)=>{if(u.equipped!==undefined)return;const best=CH.filter(c=>(u.chars||{})[c[0]]>0).sort((a,b)=>b[4]-a[4])[0];t.update(uref,{equipped:best?best[0]:null})})}catch(e){fail(e,'migração')}mig=0}
+function subRank(){unsubRank&&unsubRank();unsubRank=onSnapshot(query(collection(db,'users'),orderBy('coins','desc'),limit(20)),s=>{$('#rl').innerHTML=s.docs.map((d,i)=>{const u=d.data();return`<li class="rk ${d.id==uid?'me':''}"><span>${i+1}. ${esc(u.nick||'Jogador')}</span><span>${d.id==uid?'':`<button class="chip" data-uid="${d.id}" data-nick="${esc(u.nick||'Jogador')}">💸 Pix</button> `}<b>${(u.coins||0).toLocaleString('pt-BR')} 🪙</b></span></li>`}).join('')},e=>{$('#rl').innerHTML='<li class="rk">Não consegui carregar o ranking.</li>';fail(e,'ranking')})}
+$('#rl').onclick=e=>{const b=e.target.closest('button[data-uid]');if(!b)return;xPick={uid:b.dataset.uid,nick:b.dataset.nick};$('#xTo').value=b.dataset.nick;showTab('send');$('#xAmt').focus()};
 const WEEK=7*864e5;
 function fmtWait(ms){const m=Math.ceil(ms/60000),d=Math.floor(m/1440),h=Math.floor(m%1440/60);return d?`${d}d ${h}h`:h?`${h}h ${m%60}min`:`${m}min`}
 function renderNickInfo(){if(!data)return;const w=(data.nickAt||0)+WEEK-getNow();$('#nickInfo').textContent=w>0?`Você poderá trocar de novo em ${fmtWait(w)}.`:'Você pode trocar agora. Depois disso, só 1 vez por semana.'}
@@ -326,6 +354,42 @@ $('#nickSave').onclick=async()=>{const n=$('#nickIn').value.trim().replace(/\s+/
  try{const dup=await getDocs(query(collection(db,'users'),where('nick','==',n)));if(dup.docs.some(d=>d.id!==uid))return say('#nickMsg','Esse nome já está em uso.','lose');
   await tx((t,u)=>{if((u.nickAt||0)+WEEK>getNow())throw Error('Você já trocou o nome essa semana.');t.update(uref,{nick:n,nickAt:getNow()})});
   say('#nickMsg','Nome alterado!','win');setTimeout(()=>$('#nickbox').classList.add('hide'),1200)}catch(e){say('#nickMsg',fail(e,'nickname'),'lose')}};
-const TABS=['race','mines','crash','pix','slot','dice','shop','rank'];
-document.querySelectorAll('nav button[data-t]').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button[data-t]').forEach(x=>x.setAttribute('aria-selected',x===b));TABS.forEach(t=>$('#'+t).classList.toggle('hide',t!==b.dataset.t));if(b.dataset.t=='crash')fit()});
+/* ---------- enviar pix ---------- */
+$('#xTo').oninput=()=>{xPick=null};
+$('#xGo').onclick=async()=>{if(xBusy)return;const n=$('#xTo').value.trim(),a=Math.floor(+$('#xAmt').value);
+ if(!n)return say('#xMsg','Digite o nickname de quem vai receber.','lose');
+ if(!(a>=1))return say('#xMsg','Valor inválido.','lose');
+ if(a>(data.coins||0))return say('#xMsg','Saldo insuficiente.','lose');
+ xBusy=1;$('#xGo').disabled=true;
+ try{let to=xPick&&xPick.nick===n?xPick.uid:null;
+  if(!to){const s=await getDocs(query(collection(db,'users'),where('nick','==',n)));
+   if(!s.size)throw Error('Não achei nenhum jogador com esse nickname.');
+   if(s.size>1)throw Error('Mais de um jogador usa esse nome. Escolha o jogador pelo Ranking.');
+   to=s.docs[0].id}
+  if(to===uid)throw Error('Você não pode mandar Pix para você mesmo.');
+  const pr=doc(collection(db,'pix')),tref=doc(db,'users',to);let toNick=n;
+  await runTransaction(db,async t=>{const u=await t.get(uref),r=await t.get(tref);
+   if(!r.exists())throw Error('Esse jogador não existe mais.');if(u.data().coins<a)throw Error('Saldo insuficiente.');
+   toNick=r.data().nick||n;t.update(uref,{coins:u.data().coins-a});
+   t.set(pr,{from:uid,fromNick:u.data().nick||'Jogador',to,toNick,amount:a,claimed:false,at:serverTimestamp()})});
+  say('#xMsg',`Pix de ${a} 🪙 enviado para ${toNick}!`,'win');toast(`Pix enviado para ${toNick}`)}
+ catch(e){say('#xMsg',fail(e,'pix'),'lose')}
+ xBusy=0;$('#xGo').disabled=false};
+// quem recebe: ao ver um Pix pendente endereçado a ele, o próprio app credita na conta dele
+function subPix(){unsubPx.forEach(f=>f());xIn=[];xOut=[];
+ unsubPx=[onSnapshot(query(collection(db,'pix'),where('to','==',uid)),s=>{xIn=s.docs.map(d=>({id:d.id,...d.data()}));xIn.filter(p=>!p.claimed).forEach(claimPix);renderPix()},e=>fail(e,'pix recebidos')),
+  onSnapshot(query(collection(db,'pix'),where('from','==',uid)),s=>{xOut=s.docs.map(d=>({id:d.id,...d.data()}));renderPix()},e=>fail(e,'pix enviados'))]}
+async function claimPix(p){if(claiming.has(p.id))return;claiming.add(p.id);
+ try{const pr=doc(db,'pix',p.id);let got=0;
+  await runTransaction(db,async t=>{got=0;const x=await t.get(pr),u=await t.get(uref);if(!x.exists()||x.data().claimed||x.data().to!==uid)return;
+   got=x.data().amount;t.update(pr,{claimed:true,claimedAt:serverTimestamp()});t.update(uref,{coins:u.data().coins+got})});
+  if(got)toast(`💸 Você recebeu um Pix de ${got} 🪙 de ${p.fromNick}!`)}
+ catch(e){fail(e,'receber pix')}
+ claiming.delete(p.id)}
+function renderPix(){const ms=p=>p.at?p.at.toMillis():9e15,a=[...xOut.map(p=>({...p,out:1})),...xIn.map(p=>({...p,out:0}))].sort((x,y)=>ms(y)-ms(x)).slice(0,10);
+ $('#xHist').innerHTML=a.length?a.map(p=>`<li class="rk"><span>${p.out?'➡️ Enviado para '+esc(p.toNick):'⬅️ Recebido de '+esc(p.fromNick)}${p.out&&!p.claimed?' <small class="sm">(aguardando ele abrir o jogo)</small>':''}</span><b class="${p.out?'lose':'win'}">${p.out?'-':'+'}${(p.amount||0).toLocaleString('pt-BR')} 🪙</b></li>`).join(''):'<li class="rk sm">Nenhum Pix ainda.</li>'}
+
+const TABS=['race','mines','crash','pix','slot','dice','send','shop','rank'];
+function showTab(t){document.querySelectorAll('nav button[data-t]').forEach(x=>x.setAttribute('aria-selected',x.dataset.t===t));TABS.forEach(x=>$('#'+x).classList.toggle('hide',x!==t));if(t=='crash')fit()}
+document.querySelectorAll('nav button[data-t]').forEach(b=>b.onclick=()=>showTab(b.dataset.t));
 </script></body></html>
