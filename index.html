@@ -32,7 +32,7 @@ nav{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px}n
 ol{padding:0;list-style:none;margin:0}li.rk{display:flex;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--l)}li.me{background:#ff7a4d22}
 #toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;max-width:90%;z-index:9}
 .dust{position:absolute;right:-20px;top:10px;font-size:16px;opacity:0}
-.rk{position:absolute;left:0;top:0;font-size:34px;line-height:1;z-index:2;transform:translate(16px,206px) rotate(-45deg)}.rk.idle{animation:bob .7s ease-in-out infinite alternate}@keyframes bob{to{margin-top:-7px}}
+.rocket{position:absolute;left:0;top:0;font-size:34px;line-height:1;z-index:2;transform:translate(16px,206px) rotate(-45deg)}.rocket.idle{animation:bob .7s ease-in-out infinite alternate}@keyframes bob{to{margin-top:-7px}}
 .rf{position:absolute;left:-6px;bottom:-4px;width:20px;height:20px;border-radius:50%;background:radial-gradient(circle,#fff 0,#ffd23f 30%,#ff7a4d 60%,transparent 72%);animation:fl .12s infinite alternate;z-index:-1}@keyframes fl{to{transform:scale(1.6);opacity:.7}}
 .mult{z-index:1;place-items:start;padding:10px 16px;transform-origin:0 0}
 .stage{position:relative;height:170px;display:grid;place-items:center;overflow:hidden}.box{font-size:5rem;filter:drop-shadow(0 0 8px var(--ac))}.flash{position:absolute;inset:0;background:#fff;border-radius:14px;opacity:0;pointer-events:none}
@@ -71,7 +71,7 @@ ol{padding:0;list-style:none;margin:0}li.rk{display:flex;justify-content:space-b
  </section>
 
  <section id="crash" class="card hide">
-  <div class="screen" id="scr"><canvas id="cv"></canvas><div class="rk idle" id="rk"><span class="rf"></span>🚀</div><div class="mult" id="cm">1.00x</div></div>
+  <div class="screen" id="scr"><canvas id="cv"></canvas><div class="rocket idle" id="rk"><span class="rf"></span>🚀</div><div class="mult" id="cm">1.00x</div></div>
   <div class="row" style="margin-top:12px"><label class="sm">Aposta <input id="cB" type="number" min="1" value="50"></label><label class="sm">Retirar auto em <input id="cA" type="number" min="1.1" step="0.1" placeholder="opcional"></label><button class="btn" id="cGo">Apostar e decolar</button></div>
   <p class="msg" id="cMsg">Retire antes do foguete explodir.</p><div class="hist" id="hist"></div>
  </section>
